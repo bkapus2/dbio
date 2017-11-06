@@ -16,7 +16,9 @@
     "babel-register": "^6.26.0",
     "chai": "^4.1.2",
     "mocha": "^4.0.1",
-    "nodemon": "^1.12.1"
+    "nodemon": "^1.12.1",
+    "sinon": "^4.1.1",
+    "sinon-chai": "^2.14.0"
   },
   "scripts": {
     "test": "nodemon --watch . --exec \"mocha --require babel-register\"",
