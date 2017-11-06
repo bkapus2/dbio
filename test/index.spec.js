@@ -7,38 +7,59 @@ chai.use(sinonChai);
 
 describe('dbio', function() {
 
-  const tableName = 'People';
-  const model = [
+  const tableName = 'PeopleTable';
+  const masterModel = [
     {
       column: 'person_id',
       key: 'personId',
-      type: 'INTEGER'
+      type: 'INTEGER',
+      value: 1
     },
     {
       column: 'first_name',
       key: 'firstName',
-      type: 'TEXT'
+      type: 'TEXT',
+      value: 'brian'
     },
     {
       column: 'middle_name',
       key: 'middleName',
-      type: 'TEXT'
+      type: 'TEXT',
+      value: 'marian'
     },
     {
       column: 'last_name',
       key: 'lastName',  
-      type: 'TEXT'
+      type: 'TEXT',
+      value: 'kapustka'
     },
     {
       column: 'date_created',
       key: 'dateCreated',  
-      type: 'TIMESTAMP'
+      type: 'TIMESTAMP',
+      value: new Date()
+    },
+    {
+      column: 'is_programmer',
+      key: 'isProgrammer',  
+      type: 'BOOLEAN',
+      value: true
     },
     // {
     //   key: 'emails',
     //   entity: 'email'
     // },
   ];
+  const props = function(props) {
+    return function(item) {
+      return props.reduce((acc, val)=>{
+        acc[val] = item[val];
+        return acc;
+      },{});
+    }
+  }
+  const model = masterModel.map(props(['column', 'key', 'type']));
+  const primativeInstance = masterModel.reduce((acc, {key, value})=>{acc[key] = value; return acc}, {});
 
   it('should be an object', function() {
     expect(dbio).to.be.a('object');
@@ -88,13 +109,13 @@ describe('dbio', function() {
     });
 
     it('should register valid arguments without error', function() {
-      const collection = dbio.registerCollection({ key, model, tableName });
-      expect(collection).to.be.an.instanceof(Object);
+      expect(registerCollection({ key, model, tableName })).to.not.throw(Error);
     });
 
     it('should correctly register all properties', function() {
       const collection = dbio.registerCollection({ key, model, tableName });
-      expect(collection.constructor.name).to.equal(tableName);
+      expect(collection).to.be.an.instanceof(Object);
+      expect(collection.constructor.name).to.equal(key[0].toUpperCase()+key.slice(1));
       expect(collection.model).to.equal(model);
       expect(dbio[key]).to.equal(collection);
     });
@@ -140,11 +161,40 @@ describe('dbio', function() {
     });
 
     it('should register valid arguments without error', function() {
-      const factoryConstructor = dbio.registerEntity({ key, model, tableName });
-      expect(factoryConstructor).to.be.an.instanceof(Function);
+      expect(registerEntity({ key, model })).to.not.throw(Error);
     });
 
+    it('should return a factory constructor which creates the expected entities', function() {
+      const factoryConstructor = dbio.registerEntity({ key, model });
+      expect(factoryConstructor).to.be.an.instanceof(Function);
+      const instance = factoryConstructor(primativeInstance);
+    });
+
+    describe('factoryConstructor', function() {
+
+      const factoryConstructor = dbio.registerEntity({ key, model });
+      
+      it('should return an object with the correct properties', function(){
+        const instance = factoryConstructor(primativeInstance);
+        masterModel.forEach(({key}) => {
+          expect(instance).to.have.property(key);
+        });
+      });
+
+      it('should return an object with the correct property values', function(){
+        const instance = factoryConstructor(primativeInstance);
+        masterModel.forEach(({key, value}) => {
+          expect(instance[key]).to.equal(value);
+        });
+      });
+    })
+
     it('should correctly register all properties', function() {
+      const factoryConstructor = dbio.registerEntity({ key, model });
+      const instance = factoryConstructor();
+      expect(instance.constructor.name).to.equal(key[0].toUpperCase()+key.slice(1));
+      expect(instance.model).to.equal(model);
+      expect(dbio[key]).to.equal(factoryConstructor);
     });
   });
 });
