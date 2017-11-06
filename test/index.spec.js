@@ -5,69 +5,78 @@ import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
 
-describe('dbio', function() {
-
-  const tableName = 'PeopleTable';
-  const masterModel = [
-    {
-      column: 'person_id',
-      key: 'personId',
-      type: 'INTEGER',
-      value: 1
-    },
-    {
-      column: 'first_name',
-      key: 'firstName',
-      type: 'TEXT',
-      value: 'brian'
-    },
-    {
-      column: 'middle_name',
-      key: 'middleName',
-      type: 'TEXT',
-      value: 'marian'
-    },
-    {
-      column: 'last_name',
-      key: 'lastName',  
-      type: 'TEXT',
-      value: 'kapustka'
-    },
-    {
-      column: 'date_created',
-      key: 'dateCreated',  
-      type: 'TIMESTAMP',
-      value: new Date()
-    },
-    {
-      column: 'is_programmer',
-      key: 'isProgrammer',  
-      type: 'BOOLEAN',
-      value: true
-    },
-    // {
-    //   key: 'emails',
-    //   entity: 'email'
-    // },
-  ];
-  const props = function(props) {
-    return function(item) {
-      return props.reduce((acc, val)=>{
-        acc[val] = item[val];
-        return acc;
-      },{});
-    }
+const tableName = 'PeopleTable';
+const masterModel = [
+  {
+    column: 'person_id',
+    key: 'personId',
+    type: 'INTEGER',
+    value: 1
+  },
+  {
+    column: 'first_name',
+    key: 'firstName',
+    type: 'TEXT',
+    value: 'brian'
+  },
+  {
+    column: 'middle_name',
+    key: 'middleName',
+    type: 'TEXT',
+    value: 'marian'
+  },
+  {
+    column: 'last_name',
+    key: 'lastName',  
+    type: 'TEXT',
+    value: 'kapustka'
+  },
+  {
+    column: 'date_created',
+    key: 'dateCreated',  
+    type: 'TIMESTAMP',
+    value: new Date()
+  },
+  {
+    column: 'is_programmer',
+    key: 'isProgrammer',  
+    type: 'BOOLEAN',
+    value: true
+  },
+  // {
+  //   key: 'emails',
+  //   entity: 'email'
+  // },
+];
+const props = function(props) {
+  return function(item) {
+    return props.reduce((acc, val)=>{
+      acc[val] = item[val];
+      return acc;
+    },{});
   }
-  const model = masterModel.map(props(['column', 'key', 'type']));
-  const primativeInstance = masterModel.reduce((acc, {key, value})=>{acc[key] = value; return acc}, {});
+}
+const model = masterModel.map(props(['column', 'key', 'type']));
+const primativeInstance = masterModel.reduce((acc, {key, value})=>{acc[key] = value; return acc}, {});
+const entityKey = 'person';
+const collectionKey = 'people'
+
+describe('dbio', function() {
 
   it('should be an object', function() {
     expect(dbio).to.be.a('object');
   });
 
+  describe('#registerQueryHandler', function() {
+
+    it('should be a function', function() {
+      expect(dbio.registerQueryHandler).to.be.a('function');
+    });
+  });
+
   describe('#registerCollection', function() {
 
-    const key = 'people';
+    const key = collectionKey;
 
     const registerCollection = function(...args) {
       return function() {
@@ -123,7 +132,7 @@ describe('dbio', function() {
 
   describe('#registerEntity', function() {
     
-    const key = 'person';
+    const key = entityKey;
     
     const registerEntity = function(...args) {
       return function() {
@@ -170,25 +179,6 @@ describe('dbio', function() {
       const instance = factoryConstructor(primativeInstance);
     });
 
-    describe('factoryConstructor', function() {
-
-      const factoryConstructor = dbio.registerEntity({ key, model });
-      
-      it('should return an object with the correct properties', function(){
-        const instance = factoryConstructor(primativeInstance);
-        masterModel.forEach(({key}) => {
-          expect(instance).to.have.property(key);
-        });
-      });
-
-      it('should return an object with the correct property values', function(){
-        const instance = factoryConstructor(primativeInstance);
-        masterModel.forEach(({key, value}) => {
-          expect(instance[key]).to.equal(value);
-        });
-      });
-    })
-
     it('should correctly register all properties', function() {
       const factoryConstructor = dbio.registerEntity({ key, model });
       const instance = factoryConstructor();
@@ -197,6 +187,71 @@ describe('dbio', function() {
       expect(dbio[key]).to.equal(factoryConstructor);
     });
   });
+});
+
+describe('Entity', function() {
+
+  const key = entityKey;
+  const factoryConstructor = dbio.registerEntity({ key, model });
+  const instance = factoryConstructor(primativeInstance);
+  
+  it('should return an object with the correct properties', function(){
+    masterModel.forEach(({key}) => {
+      expect(instance).to.have.property(key);
+    });
+  });
+
+  it('should return an object with the correct property values', function(){
+    masterModel.forEach(({key, value}) => {
+      expect(instance[key]).to.equal(value);
+    });
+  });
+
+  describe('#create', function(){
+
+    it('should be a function', function() {
+      expect(instance.create).to.be.instanceof(Function);
+    });
+
+    it('should return a promise', function() {
+      expect(instance.create()).to.be.instanceof(Promise);
+    });
+  });
+
+  describe('#read', function(){
+
+    it('should be a function', function() {
+      expect(instance.create).to.be.instanceof(Function);
+    });
+
+    it('should return a promise', function() {
+      expect(instance.create()).to.be.instanceof(Promise);
+    });
+  });
+
+  describe('#update', function(){
+
+    it('should be a function', function() {
+      expect(instance.create).to.be.instanceof(Function);
+    });
+
+    it('should return a promise', function() {
+      expect(instance.create()).to.be.instanceof(Promise);
+    });
+  });
+
+  describe('#delete', function(){
+
+    it('should be a function', function() {
+      expect(instance.create).to.be.instanceof(Function);
+    });
+
+    it('should return a promise', function() {
+      expect(instance.create()).to.be.instanceof(Promise);
+    });
+  });
+
+
 });
 
 // const person = [
